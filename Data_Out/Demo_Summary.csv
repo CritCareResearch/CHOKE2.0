@@ -1,0 +1,3 @@
+"group","n","bp_num","smoke_num","diabetes_num","cholesterol_num","stenosis_num","bp_percent","cholesterol_percent","smoke_percent","diabetes_percent","stenosis_percent","height_m","height_sd","height_se","weight_m","weight_sd","weight_se"
+"Control",19,4,3,0,1,0,21.0526315789474,5.26315789473684,15.7894736842105,0,0,71.0526315789474,2.12063104367351,0.486506127153054,180.315789473684,24.4632437014731,5.61225300662784
+"Grappler",20,4,9,1,2,0,20,10,45,5,0,69.4,2.64376127594958,0.591162992930483,183.6,29.9778865867914,6.70325922298447
