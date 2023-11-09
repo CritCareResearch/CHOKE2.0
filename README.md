@@ -91,6 +91,7 @@ CHOKE2_Sport
 - primary_athletics: primary sport, freeform
   
 /Data_Out: Summary files produced by R code are saved here.
+
 /Figures: Figures produced by R code are saved here.
 
 REFERENCES
