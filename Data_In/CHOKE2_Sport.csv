@@ -1,0 +1,40 @@
+record_id,group,grouptraumahx,years_grappling,number_chokes,regular_grappling,frequency_athletics,primary_athletics
+1,0,0,0,0,0,2,biking
+2,1,1,1,1,1,4,Grappling
+3,0,0,0,0,0,4,Biking
+4,1,0,1,1,1,7,Bjj 
+5,1,0,1,1,1,6,grappling
+6,0,0,0,0,0,3,gym
+7,1,0,1,1,1,5,jiu jitsu
+8,0,0,0,0,0,6,Weight training
+9,0,0,0,0,0,6,Biking
+10,1,1,1,1,1,6,farm work
+11,1,0,1,1,1,7,grappling
+12,1,0,1,1,1,5,grappling
+13,1,1,1,1,1,7,grappling
+14,1,1,1,1,1,6,grappling
+15,0,0,0,0,0,3,CrossFit
+16,0,0,0,0,0,5,biking/running
+17,0,0,0,0,0,6,CrossFit
+18,1,0,1,1,1,3,grappling
+19,0,0,0,0,0,5,weightlifting
+20,1,1,1,1,1,6,grappling
+21,0,0,0,0,0,4,biking/running
+22,1,1,1,1,1,7,grappling
+23,0,0,0,0,0,6,CrossFit
+24,1,0,1,1,1,5,grappling
+25,1,0,1,1,1,5,grappling
+26,0,0,0,0,0,5,peloton
+27,1,1,1,1,1,5,grappling
+28,1,0,1,1,1,5,grappling
+29,0,0,0,0,0,5,running
+30,0,0,0,0,0,3,yoga
+31,0,0,0,0,0,3,peloton
+32,1,1,1,1,1,4,grappling
+33,1,0,1,1,1,5,grappling
+34,0,0,0,0,0,4,lifting
+35,0,0,0,0,0,3,hike/walk
+36,1,1,1,1,1,3,grappling
+37,0,0,0,0,0,5,running (variety)
+38,1,0,1,1,1,5,grappling
+39,0,0,0,0,0,3,peloton

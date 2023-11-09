@@ -1,0 +1,831 @@
+---
+title: "CHOKE 2.0"
+author: "Kirsten Dalrymple, PhD"
+date: "11/9/2023"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+# Open libraries
+library(gridExtra)
+library(tidyverse)
+library(broom)
+library(emmeans)
+library(corrr)
+library(here)
+library(ggpubr)
+library(psych)
+library(lavaan)
+library(ppcor)
+library(gtsummary)
+library(gplots)
+
+
+```
+
+# DEMOGRAPHICS
+
+```{r}
+demo <- read.csv("Data_In/CHOKE2_Demographics.csv")
+demo$group<-ifelse(demo$group==0, "Control","Grappler") # Convert 0 = Control, 1 = Grappler
+demo$grouptraumahx<-ifelse(demo$grouptraumahx==0, "No Trauma","Trauma") 
+
+
+demo_sum <- demo %>% 
+  group_by(group) %>% 
+  summarize(n=n(),
+            
+            bp_num = sum(bloodpressure),
+            smoke_num= sum(tobacco_ever),
+            diabetes_num = sum(diabetes),
+            cholesterol_num = sum(cholesterol),
+            stenosis_num = sum(stenosis_dissection),
+            bp_percent = (sum(bloodpressure)/n)*100,
+            cholesterol_percent = (sum(cholesterol))/n*100,
+            smoke_percent= (sum(tobacco_ever)/n)*100,
+            diabetes_percent = (sum(diabetes)/n)*100,
+            stenosis_percent = (sum(stenosis_dissection)/n)*100,
+            height_m = mean(height),
+            height_sd = sd(height),
+            height_se = height_sd/sqrt(n),
+            weight_m = mean(weight),
+            weight_sd = sd(weight),
+            weight_se = weight_sd/sqrt(n)
+            )
+
+
+write.csv(demo_sum, "Data_Out/Demo_Summary.csv", row.names = FALSE)
+
+
+
+################
+### T-Tests
+################
+
+w_ttest<- t.test(weight ~ group, var.equal=TRUE, data = demo)
+w_ttest
+
+
+
+
+
+```
+
+# PREPARTICIPATION SURVEY: AGE AND GENDER
+```{r}
+pre <- read.csv("Data_In/CHOKE2_PreParticipation.csv")
+pre$group<-ifelse(pre$group==0, "Control","Grappler") # Convert 0 = Control, 1 = Grappler
+pre$grouptraumahx<-ifelse(pre$grouptraumahx==0, "No Trauma","Trauma") 
+pre$gender<-ifelse(pre$gender==1, "Male","Female") 
+
+pre_age <- pre %>% 
+  group_by(group) %>% 
+  summarize(n=n(),
+            age_m = mean(age),
+            age_sd = sd(age),
+            age_se = age_sd/sqrt(n),
+            age_min = min(age),
+            age_max = max(age)
+  )
+
+write.csv(pre_age, "Data_Out/Age.csv", row.names = FALSE)
+
+pre_gen <- pre %>% 
+  group_by(group, gender) %>% 
+  summarize(n=n()
+            )
+
+write.csv(pre_gen, "Data_Out/Gender.csv", row.names = FALSE)
+
+
+################
+### T-Tests
+################
+
+age_ttest<- t.test(age ~ group, var.equal=TRUE, data = pre)
+age_ttest
+```
+
+# SPORT PARTICIPATION
+
+```{r}
+sport <- read.csv("Data_In/CHOKE2_Sport.csv")
+
+sport$group<-ifelse(sport$group==0, "Control","Grappler") # Convert 0 = Control, 1 = Grappler
+sport$grouptraumahx<-ifelse(sport$grouptraumahx==0, "No Trauma","Trauma")
+
+# Rename similar open fields to same categories
+sport[sport == "Biking"] <- "biking" 
+sport[sport == "lifing"] <- "weightlifting"
+sport[sport == "Weight training"] <- "weightlifting"
+sport[sport == "running (variety)"] <- "running"
+sport[sport == "Bjj"] <- "grappling"
+sport[sport == "jiu jitsu"] <- "grappling"
+sport[sport == "Grappling"] <- "grappling"
+
+#compute frequency of participation (days per week)
+sport_freq <- sport %>% 
+  group_by(group) %>% 
+  summarize(n=n(),
+            freq_m = mean(frequency_athletics),
+            freq_sd = sd(frequency_athletics),
+            freq_se = freq_sd/sqrt(n),
+            freq_min = min(frequency_athletics),
+            freq_max = max(frequency_athletics)
+  )
+
+
+
+write.csv(sport_freq, "Data_Out/Sport_freq.csv", row.names = FALSE)
+
+#summarize sport types
+
+sport[sport == "Biking"] <- "biking" 
+sport[sport == "lifing"] <- "weightlifting"
+sport[sport == "Weight training"] <- "weightlifting"
+sport[sport == "running (variety)"] <- "running"
+sport[sport == "Bjj"] <- "grappling"
+sport[sport == "jiu jitsu"] <- "grappling"
+sport[sport == "Grappling"] <- "grappling"
+
+prime_sport <- unique(sport$primary_athletics)
+
+
+write.csv(prime_sport, "Data_Out/Primary_sport.csv", row.names = FALSE)
+```
+
+
+#BRAIN SERUM MARKERS: CONTROL VS GRAPPLER 
+
+```{r}
+# read in data
+brain <- read.csv("Data_In/CHOKE2_Brain.csv")
+brain$group<-ifelse(brain$group==0, "Control","Grappler") # Convert 0 = Control, 1 = Grappler
+
+#Summarize data
+brain_sum <- brain %>% 
+  group_by(group) %>% 
+  summarize(n=n(),
+            nfl_m = mean(nfl, na.rm=TRUE),
+            nfl_sd = sd(nfl, na.rm=TRUE),
+            nfl_se = nfl_sd/(sqrt(n)),
+            hgfap_m = mean(hgfap, na.rm=TRUE),
+            hgfap_sd = sd(hgfap, na.rm=TRUE),
+            hgfap_se = hgfap_sd/(sqrt(n)),
+            tau_m = mean(tau, na.rm=TRUE),
+            tau_sd = sd(tau, na.rm=TRUE),
+            tau_se = tau_sd/(sqrt(n)),
+            l1_m = mean(l1, na.rm=TRUE),
+            l1_sd = sd(l1, na.rm=TRUE),
+            l1_se = l1_sd/(sqrt(n))
+            )
+write.csv(brain_sum, "Data_Out/Brain_Summary.csv", row.names = FALSE)
+
+###########################
+# PLOT DATA: SCATTER
+###########################
+
+##NFL
+
+plot_nfl_scat <- brain %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=nfl, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,25))+
+        xlab("Group")+
+        ylab ("NFL (pg/mL)")+
+        labs(title="NFL")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_nfl_scat
+
+ggsave(plot = plot_nfl_scat, "Figures/nfl_scat.pdf", device = "pdf")
+
+
+
+## hgfap
+
+plot_hgfap_scat <- brain %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=hgfap, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,150))+
+        xlab("Group")+
+        ylab ("hGFAP (pg/mL)")+
+        labs(title="hGFAP")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_hgfap_scat
+
+ggsave(plot = plot_hgfap_scat, "Figures/hgfap_scat.pdf", device = "pdf")
+
+## TAU 
+
+plot_tau_scat <- brain %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=tau, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,10))+
+        xlab("Group")+
+        ylab ("Total tau (pg/mL)")+
+        labs(title="Total tau")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_tau_scat
+
+ggsave(plot = plot_tau_scat, "Figures/tau_scat.pdf", device = "pdf")
+
+## l1
+
+
+plot_l1_scat <- brain %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=l1, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,190))+
+        xlab("Group")+
+        ylab ("UCH-L1 (pg/mL)")+
+        labs(title="UCH-L1")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_l1_scat
+
+ggsave(plot = plot_l1_scat, "Figures/l1_scat.pdf", device = "pdf")
+
+################
+### T-Tests
+################
+
+nfl_ttest<- t.test(nfl ~ group, var.equal=TRUE, data = brain)
+nfl_ttest
+
+hgfap_ttest<- t.test(hgfap ~ group, var.equal=TRUE, data = brain)
+hgfap_ttest
+
+tau_ttest<- t.test(tau ~ group, var.equal=TRUE, data = brain)
+tau_ttest
+
+l1_ttest<- t.test(l1 ~ group, var.equal=TRUE, data = brain)
+l1_ttest
+
+```
+
+# BRAIN: without L1 outlier
+
+```{r}
+# read in data
+brain <- read.csv("Data_In/CHOKE2_Brain.csv")
+brain$group<-ifelse(brain$group==0, "Control","Grappler") # Convert 0 = Control, 1 = Grappler
+
+#Summarize data
+brain_sum2 <- brain %>% 
+  filter(record_id !=36) %>%  #remove record_id 36, outlier for L1
+  group_by(group) %>% 
+  summarize(n=n(),
+            nfl_m = mean(nfl, na.rm=TRUE),
+            nfl_sd = sd(nfl, na.rm=TRUE),
+            nfl_se = nfl_sd/(sqrt(n)),
+            hgfap_m = mean(hgfap, na.rm=TRUE),
+            hgfap_sd = sd(hgfap, na.rm=TRUE),
+            hgfap_se = hgfap_sd/(sqrt(n)),
+            tau_m = mean(tau, na.rm=TRUE),
+            tau_sd = sd(tau, na.rm=TRUE),
+            tau_se = tau_sd/(sqrt(n)),
+            l1_m = mean(l1, na.rm=TRUE),
+            l1_sd = sd(l1, na.rm=TRUE),
+            l1_se = l1_sd/(sqrt(n))
+            )
+write.csv(brain_sum, "Data_Out/Brain_Summary2.csv", row.names = FALSE)
+
+
+
+
+###########################
+# PLOT DATA: SCATTER
+###########################
+
+##NFL
+
+plot_nfl_scat2 <- brain %>%
+  filter(record_id !=36) %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=nfl, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,25))+
+        xlab("Group")+
+        ylab ("NFL (pg/mL)")+
+        labs(title="NFL")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_nfl_scat2
+
+ggsave(plot = plot_nfl_scat2, "Figures/nfl_scat2.pdf", device = "pdf")
+
+
+
+## hgfap
+
+plot_hgfap_scat2 <- brain %>% 
+  filter(record_id !=36) %>%
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=hgfap, colour = group))+
+        geom_jitter(width=0.5, size=1 )+
+        ylim(c(0,150))+
+        xlab("Group")+
+        ylab ("hGFAP (pg/mL)")+
+        labs(title="hGFAP")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_hgfap_scat2
+
+ggsave(plot = plot_hgfap_scat2, "Figures/hgfap_scat2.pdf", device = "pdf")
+
+## TAU 
+
+plot_tau_scat2 <- brain %>%
+  filter(record_id !=36) %>%
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=tau, colour = group))+
+        geom_jitter(width=0.5, size=1 )+
+        ylim(c(0,10))+
+        xlab("Group")+
+        ylab ("Total tau (pg/mL)")+
+        labs(title="Total tau")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_tau_scat2
+
+ggsave(plot = plot_tau_scat2, "Figures/tau_scat2.pdf", device = "pdf")
+
+## l1
+
+
+plot_l1_scat2 <- brain %>%
+  filter(record_id !=36) %>%
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=l1, colour = group))+
+        geom_jitter(width=0.5, size=1 )+
+        ylim(c(0,190))+
+        xlab("Group")+
+        ylab ("UCH-L1 (pg/mL)")+
+        labs(title="UCH-L1")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_l1_scat2
+
+ggsave(plot = plot_l1_scat2, "Figures/l1_scat2.pdf", device = "pdf")
+
+################
+### T-Tests
+################
+
+brain2 <- brain %>% 
+  filter(record_id!=36)
+
+nfl_ttest2<- t.test(nfl ~ group, var.equal=TRUE, data = brain2)
+nfl_ttest2
+
+hgfap_ttest2<- t.test(hgfap ~ group, var.equal=TRUE, data = brain2)
+hgfap_ttest2
+
+tau_ttest2<- t.test(tau ~ group, var.equal=TRUE, data = brain2)
+tau_ttest2
+
+l1_ttest2<- t.test(l1 ~ group, var.equal=TRUE, data = brain2)
+l1_ttest2
+
+```
+#BRAIN: TRAUMA VS NO TRAUMA
+
+```{r}
+# read in data
+brain <- read.csv("Data_In/CHOKE2_Brain.csv")
+brain$group<-ifelse(brain$group==0, "Control","Grappler") # Convert 0 = Control, 1 = Grappler
+brain$grouptraumahx<-ifelse(brain$grouptraumahx==0, "No Trauma","Trauma") # Convert 0 = No Trauma, 1 = Trauma
+
+
+#Summarize data
+brain_sum <- brain %>% 
+  group_by(group, grouptraumahx) %>% 
+  summarize(n=n(),
+            nfl_m = mean(nfl, na.rm=TRUE),
+            nfl_sd = sd(nfl, na.rm=TRUE),
+            nfl_se = nfl_sd/(sqrt(n)),
+            hgfap_m = mean(hgfap, na.rm=TRUE),
+            hgfap_sd = sd(hgfap, na.rm=TRUE),
+            hgfap_se = hgfap_sd/(sqrt(n)),
+            tau_m = mean(tau, na.rm=TRUE),
+            tau_sd = sd(tau, na.rm=TRUE),
+            tau_se = tau_sd/(sqrt(n)),
+            l1_m = mean(l1, na.rm=TRUE),
+            l1_sd = sd(l1, na.rm=TRUE),
+            l1_se = l1_sd/(sqrt(n))
+            )
+write.csv(brain_sum, "Data_Out/Brain_Summary_Trauma.csv", row.names = FALSE)
+
+
+
+
+###########################
+# PLOT DATA: SCATTER
+###########################
+
+##NFL
+
+Trauma_plot_nfl_scat <- brain %>% 
+        # filter(record_id !=36) %>% #36 is the outlier. You decided to leave him in for the figures
+        filter(group =="Grappler") %>% 
+        group_by(grouptraumahx) %>% 
+        ggplot(aes(x=grouptraumahx, y=nfl, colour =grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5, size = 2)+
+        scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+ 
+        ylim(c(0,25))+
+        xlab("Grappler group")+
+        ylab ("NFL (pg/mL)")+
+        labs(title="NFL")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_nfl_scat
+
+ggsave(plot = Trauma_plot_nfl_scat, "Figures/Trauma_nfl_scat.pdf", device = "pdf")
+
+
+
+## hgfap
+
+Trauma_plot_hgfap_scat <- brain %>% 
+        # filter(record_id !=36) %>%
+        filter(group =="Grappler") %>% 
+        group_by(grouptraumahx) %>% 
+        ggplot(aes(x=grouptraumahx, y=hgfap, colour =grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5, size = 2)+
+        scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+ 
+        ylim(c(0,150))+
+        xlab("Grappler group")+
+        ylab ("hGFAP (pg/mL)")+
+        labs(title="hGFAP")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_hgfap_scat
+
+ggsave(plot = Trauma_plot_hgfap_scat, "Figures/Trauma_hgfap_scat.pdf", device = "pdf")
+
+## TAU 
+
+Trauma_plot_tau_scat <- brain %>% 
+       # filter(record_id !=36) %>%
+        filter(group =="Grappler") %>% 
+        group_by(grouptraumahx) %>% 
+        ggplot(aes(x=grouptraumahx, y=tau, colour =grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5, size = 2)+
+        scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+ 
+        ylim(c(0,10))+
+        xlab("Grappler group")+
+        ylab ("Toal tau (pg/mL)")+
+        labs(title="Total tau")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_tau_scat
+
+ggsave(plot = Trauma_plot_tau_scat, "Figures/Trauma_tau_scat.pdf", device = "pdf")
+
+## l1
+
+
+Trauma_plot_l1_scat <- brain %>%
+ #  filter(record_id !=36) %>%
+  filter(group =="Grappler") %>% 
+        group_by(grouptraumahx) %>% 
+        ggplot(aes(x=grouptraumahx, y=l1, colour =grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5, size = 2)+
+        scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+ 
+        ylim(c(0,190))+
+        xlab("Grappler group")+
+        ylab ("UCH-L1 (pg/mL)")+
+        labs(title="UCH-L1")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_l1_scat
+
+ggsave(plot = Trauma_plot_l1_scat, "Figures/Trauma_l1_scat.pdf", device = "pdf")
+
+
+
+
+################
+### T-Tests
+################
+
+brain_sub <- brain %>% 
+  filter(group == "Grappler")  
+  
+
+Trauma_nfl_ttest<- t.test(nfl ~ grouptraumahx, var.equal=TRUE, data = brain_sub)
+Trauma_nfl_ttest
+
+Trauma_hgfap_ttest<- t.test(hgfap ~ grouptraumahx, var.equal=TRUE, data = brain_sub)
+Trauma_hgfap_ttest
+
+Trauma_tau_ttest<- t.test(tau ~ grouptraumahx, var.equal=TRUE, data = brain_sub)
+Trauma_tau_ttest
+
+Trauma_l1_ttest<- t.test(l1 ~ grouptraumahx, var.equal=TRUE, data = brain_sub)
+Trauma_l1_ttest
+
+# REMOVE OUTLIER
+brain_sub2 <- brain %>% 
+  filter(group == "Grappler") %>%
+  filter(record_id !=36)
+
+Trauma_l1_ttest2<- t.test(l1 ~ grouptraumahx, var.equal=TRUE, data = brain_sub2)
+Trauma_l1_ttest2
+
+
+```
+
+#CIMT: CONTROLS VS GRAPPLERS
+```{r}
+# Read in data
+CIMT <- read.csv("Data_In/CHOKE2_CIMT.csv")
+
+# Convert 0 = Control, 1 = Grappler
+CIMT$group<-ifelse(CIMT$group==0, "Control","Grappler") 
+
+# Create a mean for the left, and right, respectively.
+CIMT <- CIMT %>% 
+  mutate(cimt_left = (cimt_left_lat_1+cimt_left_lat_2+cimt_left_lat_3)/3,
+         cimt_right = (cimt_right_lat_1+cimt_right_lat_2+cimt_right_lat_3)/3
+         )
+
+#### Create a mean of left and right CIMT for each participant. Comb = combined ####
+CIMT <-CIMT %>% 
+  mutate(cimt_comb = (cimt_left+cimt_right)/2
+        )
+
+CIMT_sum <- CIMT %>% 
+  group_by(group) %>% 
+  filter(record_id != 18) %>% 
+  summarize(n=n(),
+            cimt_left_m = mean(cimt_left, na.rm=TRUE),
+            cimt_left_sd = sd(cimt_left, na.rm=TRUE),
+            cimt_left_se = cimt_left_sd/(sqrt(n)),
+            cimt_left_min = min(cimt_left),
+            cimt_left_max = max(cimt_left),
+            cimt_right_m = mean(cimt_right, na.rm=TRUE),
+            cimt_right_sd = sd(cimt_right, na.rm=TRUE),
+            cimt_right_se = cimt_right_sd/(sqrt(n)),
+            cimt_right_min = min(cimt_right, na.rm=TRUE),
+            cimt_right_max = max(cimt_right, na.rm=TRUE),
+            cimt_comb_m = mean(cimt_comb, na.rm=TRUE),
+            cimt_comb_sd = sd(cimt_comb, na.rm=TRUE),
+            cimt_comb_se = cimt_comb_sd/(sqrt(n)),
+            cimt_comb_min = min(cimt_comb, na.rm=TRUE),
+            cimt_comb_max = max(cimt_comb, na.rm=TRUE)
+  )
+
+write.csv(CIMT_sum, "Data_Out/CIMT_Summary.csv", row.names = FALSE)
+
+
+
+#####################
+## PLOT CIMT: SCAT
+#####################
+
+# LEFT
+plot_cimt_left_scat <- CIMT %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=cimt_left, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,1))+
+        xlab("Group")+
+        ylab ("CIMT (mm)")+
+        labs(title="LEFT")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_cimt_left_scat
+
+ggsave(plot = plot_cimt_left_scat, "Figures/CIMT_LEFT_scat.pdf", device = "pdf")
+
+# RIGHT
+plot_cimt_right_scat <- CIMT %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=cimt_right, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,1))+
+        xlab("Group")+
+        ylab ("CIMT (mm)")+
+        labs(title="RIGHT")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_cimt_right_scat
+
+ggsave(plot = plot_cimt_right_scat, "Figures/CIMT_RIGHT_scat.pdf", device = "pdf")
+
+# COMBINED
+plot_cimt_comb_scat <- CIMT %>% 
+  group_by(group) %>% 
+  ggplot(aes(x=group, y=cimt_comb, colour = group))+
+        geom_jitter(width=0.5, size=1)+
+        ylim(c(0,1))+
+        xlab("Group")+
+        ylab ("CIMT (mm)")+
+        labs(title="MEAN")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+plot_cimt_comb_scat
+
+ggsave(plot = plot_cimt_comb_scat, "Figures/CIMT_comb_scat.pdf", device = "pdf")
+
+
+
+
+##############
+### T-TESTS
+#############
+
+
+
+CIMT_left_ttest<- t.test(cimt_left ~ group, var.equal=TRUE, data = CIMT)
+CIMT_left_ttest
+
+CIMT_right_ttest<- t.test(cimt_right ~ group, var.equal=TRUE, data = CIMT)
+CIMT_right_ttest
+
+CIMT_comb_ttest<- t.test(cimt_comb ~ group, var.equal=TRUE, data = CIMT)
+CIMT_comb_ttest
+
+
+
+```
+# CIMT: TRAUMA VS NO TRAUMA
+```{r}
+# Read in data
+CIMT <- read.csv("Data_In/CHOKE2_CIMT.csv")
+
+# Convert 0 = Control, 1 = Grappler
+CIMT$group<-ifelse(CIMT$group==0, "Control","Grappler") 
+
+# Convert 0 = No Trauma, 1 = Trauma
+CIMT$grouptraumahx<-ifelse(CIMT$grouptraumahx==0, "No Trauma","Trauma") 
+
+
+
+CIMT <- CIMT %>% 
+  mutate(cimt_left = (cimt_left_lat_1+cimt_left_lat_2+cimt_left_lat_3)/3,
+         cimt_right = (cimt_right_lat_1+cimt_right_lat_2+cimt_right_lat_3)/3
+         )
+
+
+#### Create a mean of left and right CIMT for each participant. Comb = combined ####
+CIMT <-CIMT %>% 
+  mutate(cimt_comb = (cimt_left+cimt_right)/2
+  )
+
+CIMT_sum <- CIMT %>% 
+  group_by(group, grouptraumahx) %>% 
+  summarize(n=n(),
+            cimt_left_m = mean(cimt_left, na.rm=TRUE),
+            cimt_left_sd = sd(cimt_left, na.rm=TRUE),
+            cimt_left_se = cimt_left_sd/(sqrt(n)),
+            cimt_right_m = mean(cimt_right, na.rm=TRUE),
+            cimt_right_sd = sd(cimt_right, na.rm=TRUE),
+            cimt_right_se = cimt_right_sd/(sqrt(n)),
+            cimt_comb_m = mean(cimt_comb, na.rm=TRUE),
+            cimt_comb_sd = sd(cimt_comb, na.rm=TRUE),
+            cimt_comb_se = cimt_comb_sd/(sqrt(n))
+  )
+
+
+#####################
+## PLOT CIMT: SCAT
+#####################
+
+# LEFT
+Trauma_plot_cimt_left_scat <- CIMT %>%
+  filter(group=="Grappler") %>% 
+  group_by(grouptraumahx) %>% 
+  ggplot(aes(x=grouptraumahx, y=cimt_left, colour =grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5, size = 2)+
+        scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+      
+        ylim(c(0,1))+
+        xlab("Grappler group")+
+        ylab ("CIMT (mm)")+
+        labs(title="LEFT")+ 
+        theme_classic()+
+                theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_cimt_left_scat
+
+ggsave(plot = Trauma_plot_cimt_left_scat, "Figures/Trauma_CIMT_LEFT_scat.pdf", device = "pdf")
+
+# RIGHT
+Trauma_plot_cimt_right_scat <- CIMT %>% 
+  filter(group=="Grappler") %>% 
+  group_by(grouptraumahx) %>% 
+  ggplot(aes(x=grouptraumahx, y=cimt_right, colour = grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5,size=2)+
+   scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+    
+        ylim(c(0,1))+
+        xlab("Grappler group")+
+        ylab ("CIMT (mm)")+
+        labs(title="RIGHT")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_cimt_right_scat
+
+ggsave(plot = Trauma_plot_cimt_right_scat, "Figures/Trauma_CIMT_RIGHT_scat.pdf", device = "pdf")
+
+# Combined
+Trauma_plot_cimt_comb_scat <- CIMT %>% 
+  filter(group=="Grappler") %>% 
+  group_by(grouptraumahx) %>% 
+  ggplot(aes(x=grouptraumahx, y=cimt_comb, colour = grouptraumahx, shape = grouptraumahx))+
+        geom_jitter(width=0.5,size=2)+
+   scale_color_manual(values = c("Trauma" = "darkturquoise", "No Trauma" = "darkslategray2"))+    
+        ylim(c(0,1))+
+        xlab("Grappler group")+
+        ylab ("CIMT (mm)")+
+        labs(title="MEAN")+ 
+        theme_classic()+
+        theme(legend.position="none")+
+        theme(plot.title = element_text(hjust = 0.5)
+                      )
+
+Trauma_plot_cimt_comb_scat
+
+ggsave(plot = Trauma_plot_cimt_comb_scat, "Figures/Trauma_CIMT_comb_scat.pdf", device = "pdf")
+
+
+
+
+###############
+### T-TESTS
+###############
+
+CIMT_sub <- CIMT %>% 
+  filter(group == "Grappler")
+
+Trauma_cimt_left_ttest<- t.test(cimt_left ~ grouptraumahx, var.equal=TRUE, data = CIMT_sub)
+Trauma_cimt_left_ttest
+
+
+Trauma_cimt_right_ttest<- t.test(cimt_right ~ grouptraumahx, var.equal=TRUE, data = CIMT_sub)
+Trauma_cimt_right_ttest
+
+```
+```
+
+
