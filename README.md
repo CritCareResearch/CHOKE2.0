@@ -95,6 +95,7 @@ CHOKE2_Sport
 /Figures: Figures produced by R code are saved here.
 
 REFERENCES
+
 RStudio Team (2020). RStudio: Integrated Development for R. RStudio, PBC, Boston, MA URL htp://www.rstudio.com/.
 
 Toseto A, Prati P, Baracchini C, Manara R, Rodeghiero F. Age-adjusted reference limits for carotid intima-media thickness as beter indicator of vascular risk: populatin-based estimates from the VITA project. J Thromb Haemost. 2005;3:1224–1230.
