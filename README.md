@@ -4,6 +4,8 @@ Data and code accompany Stellpflug, S., Dalrymple, K.A., Stone, D., Southgate, S
 
 CHOKE 2.0.rmd was programed in 2023.06.0 Build 421 (RStudio Team, 2020), by Kirsten A. Dalrymple, PhD, CCRC.
 
+***NOTE: Code runs best chunk by chunk. Do not Run All.
+
 CHOKE folder contains:
 • /CHOKE 2.0.rmd
 • /Data_In
